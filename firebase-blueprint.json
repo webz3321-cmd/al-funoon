@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global website settings and toggles for the institution program fest.",
+      "type": "object",
+      "properties": {
+        "institutionName": { "type": "string", "maxLength": 150 },
+        "programName": { "type": "string", "maxLength": 150 },
+        "themeLine": { "type": "string", "maxLength": 80 },
+        "date": { "type": "string", "maxLength": 30 },
+        "time": { "type": "string", "maxLength": 30 },
+        "venue": { "type": "string", "maxLength": 200 },
+        "about": { "type": "string", "maxLength": 2000 },
+        "showCountdown": { "type": "boolean" },
+        "gameEnabled": { "type": "boolean" },
+        "launchEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "institutionName",
+        "programName",
+        "themeLine",
+        "date",
+        "time",
+        "venue",
+        "about",
+        "showCountdown",
+        "gameEnabled",
+        "launchEnabled",
+        "updatedAt"
+      ]
+    },
+    "Program": {
+      "title": "Program",
+      "description": "A scheduled stage or off-stage fest program.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "variety": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 30 },
+        "venue": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "variety", "date", "venue", "description", "createdAt"]
+    },
+    "Candidate": {
+      "title": "Candidate",
+      "description": "A registered fest candidate with admission number, team, and optional photo.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "admissionNo": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "team": { "type": "string", "maxLength": 120 },
+        "photo": { "type": "string", "maxLength": 350000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "admissionNo", "team", "photo", "createdAt"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "A competing fest team or house with display colour.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "colour": { "type": "string", "maxLength": 30, "pattern": "^#[0-9a-fA-F]{3,8}$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "colour", "createdAt"]
+    },
+    "ResultItem": {
+      "title": "ResultItem",
+      "description": "A published fest result entry awarding points and position to a candidate.",
+      "type": "object",
+      "properties": {
+        "admissionNo": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "candidateName": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "photo": { "type": "string", "maxLength": 350000 },
+        "team": { "type": "string", "maxLength": 120 },
+        "variety": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "enum": ["Bidaya", "Ula", "Thaniya", ""], "maxLength": 30 },
+        "points": { "type": "number" },
+        "position": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["admissionNo", "candidateName", "photo", "team", "variety", "points", "position", "createdAt"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "A gallery image entry for the fest.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "image": { "type": "string", "minLength": 1, "maxLength": 500000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "image", "createdAt"]
+    },
+    "UpdateItem": {
+      "title": "UpdateItem",
+      "description": "An announcement or news update for the fest.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "date": { "type": "string", "maxLength": 30 },
+        "text": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "date", "text", "createdAt"]
+    },
+    "DownloadItem": {
+      "title": "DownloadItem",
+      "description": "A downloadable schedule, brochure, or resource link.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "url": { "type": "string", "maxLength": 1000 },
+        "note": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "url", "note", "createdAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized admin user record keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "addedAt"]
+    },
+    "AdminSecurity": {
+      "title": "AdminSecurity",
+      "description": "Salted SHA-256 passcode hash for unlocking the admin console.",
+      "type": "object",
+      "properties": {
+        "salt": { "type": "string", "minLength": 16, "maxLength": 64 },
+        "passHash": { "type": "string", "minLength": 64, "maxLength": 128 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["salt", "passHash", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SiteSettings" },
+      "description": "Public fest settings document (id: main)."
+    },
+    "/programs/{programId}": {
+      "schema": { "$ref": "#/entities/Program" },
+      "description": "Public fest programs collection."
+    },
+    "/candidates/{candidateId}": {
+      "schema": { "$ref": "#/entities/Candidate" },
+      "description": "Registered fest candidates."
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Competing fest teams."
+    },
+    "/results/{resultId}": {
+      "schema": { "$ref": "#/entities/ResultItem" },
+      "description": "Published fest results."
+    },
+    "/gallery/{galleryId}": {
+      "schema": { "$ref": "#/entities/GalleryItem" },
+      "description": "Fest gallery photos."
+    },
+    "/updates/{updateId}": {
+      "schema": { "$ref": "#/entities/UpdateItem" },
+      "description": "Fest announcements and updates."
+    },
+    "/downloads/{downloadId}": {
+      "schema": { "$ref": "#/entities/DownloadItem" },
+      "description": "Fest downloadable resources."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Authorized admin user records."
+    },
+    "/adminSecurity/{securityId}": {
+      "schema": { "$ref": "#/entities/AdminSecurity" },
+      "description": "Private admin-only passcode hash configuration (id: main)."
+    }
+  }
+}

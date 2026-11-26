@@ -1,0 +1,6 @@
+{
+  "name": "MAKE YOUR MAGIC — Institution Program Website",
+  "description": "Sibaq-style illustrated institution program website — MAKE YOUR MAGIC. Scroll-story hero, menu pages, Teams leaderboard, penalty game, drawing studio, launch page and passcode admin.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

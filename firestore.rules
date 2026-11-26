@@ -1,0 +1,229 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---- Shared Primitives ----
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'webz3321@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // ---- Entity Validation Blueprints ----
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll([
+        'institutionName', 'programName', 'themeLine', 'date', 'time', 'venue',
+        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'institutionName', 'programName', 'themeLine', 'date', 'time', 'venue',
+        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'updatedAt'
+      ]) &&
+      data.institutionName is string && data.institutionName.size() <= 150 &&
+      data.programName is string && data.programName.size() <= 150 &&
+      data.themeLine is string && data.themeLine.size() <= 80 &&
+      data.date is string && data.date.size() <= 30 &&
+      data.time is string && data.time.size() <= 30 &&
+      data.venue is string && data.venue.size() <= 200 &&
+      data.about is string && data.about.size() <= 2000 &&
+      data.showCountdown is bool &&
+      data.gameEnabled is bool &&
+      data.launchEnabled is bool &&
+      data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidProgram(data) {
+      return data.keys().hasAll(['title', 'variety', 'date', 'venue', 'description', 'createdAt']) &&
+      data.keys().hasOnly(['title', 'variety', 'date', 'venue', 'description', 'createdAt']) &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+      data.variety is string && data.variety.size() <= 100 &&
+      data.date is string && data.date.size() <= 30 &&
+      data.venue is string && data.venue.size() <= 200 &&
+      data.description is string && data.description.size() <= 2000 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidCandidate(data) {
+      return data.keys().hasAll(['name', 'admissionNo', 'team', 'photo', 'createdAt']) &&
+      data.keys().hasOnly(['name', 'admissionNo', 'team', 'photo', 'createdAt']) &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+      data.admissionNo is string && data.admissionNo.size() >= 1 && data.admissionNo.size() <= 60 &&
+      data.team is string && data.team.size() <= 120 &&
+      data.photo is string && data.photo.size() <= 350000 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidTeam(data) {
+      return data.keys().hasAll(['name', 'colour', 'createdAt']) &&
+      data.keys().hasOnly(['name', 'colour', 'createdAt']) &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+      data.colour is string && data.colour.size() <= 30 && data.colour.matches('^#[0-9a-fA-F]{3,8}$') &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidResultItem(data) {
+      return data.keys().hasAll(['admissionNo', 'candidateName', 'photo', 'team', 'variety', 'points', 'position', 'createdAt']) &&
+      data.keys().hasOnly(['admissionNo', 'candidateName', 'photo', 'team', 'variety', 'category', 'points', 'position', 'createdAt']) &&
+      data.admissionNo is string && data.admissionNo.size() >= 1 && data.admissionNo.size() <= 60 &&
+      data.candidateName is string && data.candidateName.size() >= 1 && data.candidateName.size() <= 150 &&
+      data.photo is string && data.photo.size() <= 350000 &&
+      data.team is string && data.team.size() <= 120 &&
+      data.variety is string && data.variety.size() <= 120 &&
+      (!('category' in data) || (data.category is string && data.category.size() <= 30 && data.category in ['Bidaya', 'Ula', 'Thaniya', ''])) &&
+      (data.points is int || data.points is float) && data.points >= 0 && data.points <= 10000 &&
+      data.position is string && data.position.size() <= 50 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['title', 'image', 'createdAt']) &&
+      data.keys().hasOnly(['title', 'image', 'createdAt']) &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+      data.image is string && data.image.size() >= 1 && data.image.size() <= 500000 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidUpdateItem(data) {
+      return data.keys().hasAll(['title', 'date', 'text', 'createdAt']) &&
+      data.keys().hasOnly(['title', 'date', 'text', 'createdAt']) &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+      data.date is string && data.date.size() <= 30 &&
+      data.text is string && data.text.size() <= 2000 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidDownloadItem(data) {
+      return data.keys().hasAll(['title', 'url', 'note', 'createdAt']) &&
+      data.keys().hasOnly(['title', 'url', 'note', 'createdAt']) &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+      data.url is string && data.url.size() <= 1000 &&
+      data.note is string && data.note.size() <= 500 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'addedAt']) &&
+      data.keys().hasOnly(['email', 'addedAt']) &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 200 &&
+      data.addedAt is timestamp && data.addedAt == request.time;
+    }
+
+    function isValidAdminSecurity(data) {
+      return data.keys().hasAll(['salt', 'passHash', 'updatedAt']) &&
+      data.keys().hasOnly(['salt', 'passHash', 'updatedAt']) &&
+      data.salt is string && data.salt.size() >= 16 && data.salt.size() <= 64 &&
+      data.passHash is string && data.passHash.size() >= 64 && data.passHash.size() <= 128 &&
+      data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    // ---- Collection Rules ----
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'main';
+      allow create, update: if isValidId(settingId) && settingId == 'main' && isAdmin() && isValidSiteSettings(incoming());
+      allow delete: if false;
+    }
+
+    match /programs/{programId} {
+      allow list: if true;
+      allow get: if isValidId(programId);
+      allow create: if isValidId(programId) && isAdmin() && isValidProgram(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(programId) && isAdmin() && isValidProgram(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'variety', 'date', 'venue', 'description']);
+      allow delete: if isValidId(programId) && isAdmin();
+    }
+
+    match /candidates/{candidateId} {
+      allow list: if true;
+      allow get: if isValidId(candidateId);
+      allow create: if isValidId(candidateId) && isAdmin() && isValidCandidate(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(candidateId) && isAdmin() && isValidCandidate(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'admissionNo', 'team', 'photo']);
+      allow delete: if isValidId(candidateId) && isAdmin();
+    }
+
+    match /teams/{teamId} {
+      allow list: if true;
+      allow get: if isValidId(teamId);
+      allow create: if isValidId(teamId) && isAdmin() && isValidTeam(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(teamId) && isAdmin() && isValidTeam(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'colour']);
+      allow delete: if isValidId(teamId) && isAdmin();
+    }
+
+    match /results/{resultId} {
+      allow list: if true;
+      allow get: if isValidId(resultId);
+      allow create: if isValidId(resultId) && isAdmin() && isValidResultItem(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(resultId) && isAdmin() && isValidResultItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['admissionNo', 'candidateName', 'photo', 'team', 'variety', 'category', 'points', 'position']);
+      allow delete: if isValidId(resultId) && isAdmin();
+    }
+
+    match /gallery/{galleryId} {
+      allow list: if true;
+      allow get: if isValidId(galleryId);
+      allow create: if isValidId(galleryId) && isAdmin() && isValidGalleryItem(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(galleryId) && isAdmin() && isValidGalleryItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'image']);
+      allow delete: if isValidId(galleryId) && isAdmin();
+    }
+
+    match /updates/{updateId} {
+      allow list: if true;
+      allow get: if isValidId(updateId);
+      allow create: if isValidId(updateId) && isAdmin() && isValidUpdateItem(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(updateId) && isAdmin() && isValidUpdateItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'date', 'text']);
+      allow delete: if isValidId(updateId) && isAdmin();
+    }
+
+    match /downloads/{downloadId} {
+      allow list: if true;
+      allow get: if isValidId(downloadId);
+      allow create: if isValidId(downloadId) && isAdmin() && isValidDownloadItem(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(downloadId) && isAdmin() && isValidDownloadItem(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'url', 'note']);
+      allow delete: if isValidId(downloadId) && isAdmin();
+    }
+
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && isVerifiedUser() && (request.auth.uid == userId || isAdmin());
+      allow list: if false;
+      allow create: if isValidId(userId) && isAdmin() && isValidAdminUser(incoming());
+      allow update: if isValidId(userId) && isAdmin() && isValidAdminUser(incoming());
+      allow delete: if isValidId(userId) && isAdmin() && request.auth.uid != userId;
+    }
+
+    match /adminSecurity/{securityId} {
+      allow get: if isValidId(securityId) && securityId == 'main' && isAdmin();
+      allow list: if false;
+      allow create, update: if isValidId(securityId) && securityId == 'main' && isAdmin() && isValidAdminSecurity(incoming());
+      allow delete: if false;
+    }
+
+    match /test/connection {
+      allow get: if true;
+    }
+  }
+}
