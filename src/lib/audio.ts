@@ -1,77 +1,80 @@
-// WebAudio synth melody + custom MP3 audio support.
-const NOTES: [number, number][] = [
-  [523.25, 1], [659.25, 1], [783.99, 1], [659.25, 1],
-  [587.33, 1], [698.46, 1], [880.0, 2],
-  [783.99, 1], [698.46, 1], [659.25, 1], [587.33, 1], [523.25, 2],
-]
+export const DEFAULT_THEME_SONG_URL = '/assets/aistudio/__________2__73a6848a.mp3'
 
+// Audio controller for Al Funoon Fest official theme song. Plays strictly real audio (no synthesized beeps).
 export class ThemeSong {
-  private ctx: AudioContext | null = null
-  private timer: number | null = null
-  private step = 0
-  private gain: GainNode | null = null
   private audioElement: HTMLAudioElement | null = null
+  private onStateChange?: (playing: boolean) => void
+
+  constructor(onStateChange?: (playing: boolean) => void) {
+    this.onStateChange = onStateChange
+  }
 
   playing(): boolean {
-    return this.timer !== null || (this.audioElement !== null && !this.audioElement.paused)
+    return this.audioElement !== null && !this.audioElement.paused
   }
 
   start(audioUrl?: string) {
     if (this.playing()) return
+    const url = audioUrl && audioUrl.trim() ? audioUrl.trim() : DEFAULT_THEME_SONG_URL
 
-    if (audioUrl && audioUrl.trim()) {
-      this.audioElement = new Audio(audioUrl.trim())
-      this.audioElement.loop = true
-      this.audioElement.play().catch(() => {
-        // Fallback to synth melody if custom audio playback fails
-        this.startSynth()
-      })
-      return
+    try {
+      if (this.audioElement) {
+        this.stop()
+      }
+      const audio = new Audio()
+      audio.setAttribute('playsinline', 'true')
+      ;(audio as unknown as { playsInline?: boolean }).playsInline = true
+      audio.crossOrigin = 'anonymous'
+      audio.preload = 'auto'
+      audio.loop = true
+      audio.src = url
+      this.audioElement = audio
+
+      audio.onended = () => {
+        this.stop()
+      }
+
+      audio.onerror = (e) => {
+        console.warn('Theme song failed to load from primary path:', url, e)
+        if (url !== '/audio/theme-song.mp3') {
+          // Fallback to secondary copied path
+          audio.src = '/audio/theme-song.mp3'
+          audio
+            .play()
+            .then(() => this.onStateChange?.(true))
+            .catch(() => this.stop())
+        } else {
+          this.stop()
+        }
+      }
+
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            this.onStateChange?.(true)
+          })
+          .catch((err) => {
+            console.warn('Playback interrupted or prevented by browser:', err)
+            this.stop()
+          })
+      }
+    } catch (err) {
+      console.warn('Audio element error:', err)
+      this.stop()
     }
-
-    this.startSynth()
-  }
-
-  private startSynth() {
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!AC) return
-    this.ctx = this.ctx ?? new AC()
-    void this.ctx.resume()
-    this.gain = this.ctx.createGain()
-    this.gain.gain.value = 0.12
-    this.gain.connect(this.ctx.destination)
-    this.step = 0
-    const beatMs = 300
-    const playStep = () => {
-      if (!this.ctx || !this.gain) return
-      const [freq, beats] = NOTES[this.step % NOTES.length]
-      const osc = this.ctx.createOscillator()
-      const g = this.ctx.createGain()
-      osc.type = 'triangle'
-      osc.frequency.value = freq
-      const t = this.ctx.currentTime
-      g.gain.setValueAtTime(0.0001, t)
-      g.gain.exponentialRampToValueAtTime(0.5, t + 0.03)
-      g.gain.exponentialRampToValueAtTime(0.0001, t + beats * (beatMs / 1000) * 0.9)
-      osc.connect(g)
-      g.connect(this.gain)
-      osc.start(t)
-      osc.stop(t + beats * (beatMs / 1000))
-      this.step += 1
-    }
-    playStep()
-    this.timer = window.setInterval(playStep, beatMs)
   }
 
   stop() {
     if (this.audioElement) {
-      this.audioElement.pause()
-      this.audioElement.currentTime = 0
+      try {
+        this.audioElement.pause()
+        this.audioElement.currentTime = 0
+      } catch {
+        // ignore
+      }
       this.audioElement = null
     }
-    if (this.timer !== null) {
-      window.clearInterval(this.timer)
-      this.timer = null
-    }
+    this.onStateChange?.(false)
   }
 }

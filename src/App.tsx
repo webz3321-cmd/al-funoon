@@ -155,14 +155,24 @@ export default function App() {
       0
     if (hasRecords) saveData(data)
   }, [data])
-  useEffect(() => () => { songRef.current?.stop() }, [])
+
+  useEffect(() => {
+    return () => {
+      songRef.current?.stop()
+    }
+  }, [])
 
   if (syncError) throw syncError
 
   const toggleSong = () => {
-    songRef.current ??= new ThemeSong()
-    if (playing) { songRef.current.stop(); setPlaying(false) }
-    else { songRef.current.start(s.themeSongUrl); setPlaying(true) }
+    songRef.current ??= new ThemeSong((isPlaying) => setPlaying(isPlaying))
+    if (playing) {
+      songRef.current.stop()
+      setPlaying(false)
+    } else {
+      songRef.current.start(s.themeSongUrl)
+      setPlaying(true)
+    }
   }
 
   const go = (v: View) => {
@@ -359,7 +369,9 @@ export default function App() {
               </div>
 
               <p className="mt-7 font-hand text-2xl font-bold italic text-[#fef3c7] sm:text-[1.75rem]">
-                press play on the theme song — a singer pops in here to sing along!
+                {playing
+                  ? 'sing along to the official fest theme song — Al Funoon!'
+                  : 'tap the pencil to create — or play the official theme song below!'}
               </p>
 
               <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-white/95">
@@ -413,7 +425,7 @@ export default function App() {
         <button
           onClick={toggleSong}
           aria-label={playing ? 'Pause theme song' : 'Play theme song'}
-          className="group relative flex flex-col items-center justify-center rounded-full bg-[#1e293b]/55 px-2.5 pb-1.5 pt-2 backdrop-blur-[3px] shadow-2xl ring-1 ring-white/15 transition-transform hover:scale-105"
+          className="group relative flex flex-col items-center justify-center rounded-full bg-[#1e293b]/60 px-2.5 pb-1.5 pt-2 backdrop-blur-[3px] shadow-2xl ring-1 ring-white/20 transition-transform hover:scale-105 active:scale-95"
         >
           {/* Floating white musical notes around the symbol */}
           <span

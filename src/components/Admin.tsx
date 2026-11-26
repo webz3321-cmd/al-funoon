@@ -923,9 +923,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SettingsForm({ data, runAction, busy }: { data: SiteData; runAction: RunAction; busy: boolean }) {
-  const [draft, setDraft] = useState(data.settings)
+  const [draft, setDraft] = useState(() => ({
+    ...data.settings,
+    themeSongUrl: data.settings.themeSongUrl || '/assets/aistudio/__________2__73a6848a.mp3',
+  }))
+
   useEffect(() => {
-    setDraft(data.settings)
+    setDraft({
+      ...data.settings,
+      themeSongUrl: data.settings.themeSongUrl || '/assets/aistudio/__________2__73a6848a.mp3',
+    })
   }, [data.settings])
 
   const patch = (p: Partial<typeof draft>) => setDraft((d) => ({ ...d, ...p }))
@@ -961,44 +968,25 @@ function SettingsForm({ data, runAction, busy }: { data: SiteData; runAction: Ru
         </div>
 
         <div className="md:col-span-2">
-          <Field label="Theme Song (MP3 Audio Upload or URL)">
-            <div className="space-y-2">
-              <input
-                type="text"
-                className={inputCls}
-                value={draft.themeSongUrl}
-                onChange={(e) => patch({ themeSongUrl: e.target.value })}
-                placeholder="Paste MP3 audio URL or upload file below..."
-              />
-              <div className="flex items-center gap-3">
-                <input
-                  type="file"
-                  accept="audio/mp3,audio/mpeg,audio/*"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0]
-                    if (!f) return
-                    if (f.size > 8000000) {
-                      alert('Audio file size should be under 8MB.')
-                      return
-                    }
-                    const reader = new FileReader()
-                    reader.onload = () => {
-                      patch({ themeSongUrl: String(reader.result || '') })
-                    }
-                    reader.readAsDataURL(f)
-                  }}
-                  className="text-xs text-slate-500 file:mr-4 file:rounded-md file:border-0 file:bg-[#e64e24]/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#e64e24] hover:file:bg-[#e64e24]/20"
-                />
-                {draft.themeSongUrl && (
-                  <button
-                    type="button"
-                    onClick={() => patch({ themeSongUrl: '' })}
-                    className="text-xs font-semibold text-red-600 hover:underline"
-                  >
-                    Remove audio
-                  </button>
-                )}
+          <Field label="Fest Theme Song (Al Funoon Official MP3)">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Al Funoon Fest Official Theme Song</p>
+                  <p className="text-xs text-slate-500">Plays when visitors tap "Play Themesong" on the live site</p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Official Song Connected
+                </span>
               </div>
+              <audio
+                controls
+                preload="metadata"
+                playsInline
+                src={draft.themeSongUrl || '/assets/aistudio/__________2__73a6848a.mp3'}
+                className="w-full h-10 accent-[#e64e24] mt-1"
+              />
             </div>
           </Field>
         </div>

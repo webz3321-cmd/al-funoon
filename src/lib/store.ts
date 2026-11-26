@@ -76,7 +76,7 @@ export const emptySettings: Settings = {
   showCountdown: true,
   gameEnabled: true,
   launchEnabled: false,
-  themeSongUrl: '',
+  themeSongUrl: '/assets/aistudio/__________2__73a6848a.mp3',
 }
 
 export const emptyData: SiteData = {

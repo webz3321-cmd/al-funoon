@@ -216,7 +216,7 @@ export function subscribeFestData(
             showCountdown: Boolean(d.showCountdown ?? true),
             gameEnabled: Boolean(d.gameEnabled ?? true),
             launchEnabled: Boolean(d.launchEnabled ?? false),
-            themeSongUrl: String(d.themeSongUrl ?? ''),
+            themeSongUrl: String(d.themeSongUrl || '/assets/aistudio/__________2__73a6848a.mp3'),
           },
         }))
       },
