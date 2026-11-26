@@ -9,6 +9,7 @@ export interface Settings {
   showCountdown: boolean
   gameEnabled: boolean
   launchEnabled: boolean
+  themeSongUrl: string
 }
 
 export interface Program {
@@ -75,6 +76,7 @@ export const emptySettings: Settings = {
   showCountdown: true,
   gameEnabled: true,
   launchEnabled: false,
+  themeSongUrl: '',
 }
 
 export const emptyData: SiteData = {

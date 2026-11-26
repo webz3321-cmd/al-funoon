@@ -27,11 +27,11 @@ service cloud.firestore {
     function isValidSiteSettings(data) {
       return data.keys().hasAll([
         'institutionName', 'programName', 'themeLine', 'date', 'time', 'venue',
-        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'updatedAt'
+        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'themeSongUrl', 'updatedAt'
       ]) &&
       data.keys().hasOnly([
         'institutionName', 'programName', 'themeLine', 'date', 'time', 'venue',
-        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'updatedAt'
+        'about', 'showCountdown', 'gameEnabled', 'launchEnabled', 'themeSongUrl', 'updatedAt'
       ]) &&
       data.institutionName is string && data.institutionName.size() <= 150 &&
       data.programName is string && data.programName.size() <= 150 &&
@@ -43,6 +43,7 @@ service cloud.firestore {
       data.showCountdown is bool &&
       data.gameEnabled is bool &&
       data.launchEnabled is bool &&
+      data.themeSongUrl is string && data.themeSongUrl.size() <= 1000000 &&
       data.updatedAt is timestamp && data.updatedAt == request.time;
     }
 

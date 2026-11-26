@@ -4,6 +4,8 @@ import Hero from './components/Hero'
 import Admin from './components/Admin'
 import CreativityStudio from './components/CreativityStudio'
 import LaunchPage from './components/LaunchPage'
+import { FestLogo } from './components/FestLogo'
+import { LogoZoomIntro } from './components/LogoZoomIntro'
 import { CandidatesPage, DownloadsPage, GalleryPage, ProgramsPage, ResultsPage, TeamsPage, UpdatesPage } from './components/Pages'
 import { RESULT_CATEGORIES, loadData, saveData } from './lib/store'
 import type { SiteData } from './lib/store'
@@ -124,6 +126,7 @@ export default function App() {
   const [studioOpen, setStudioOpen] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [launched, setLaunched] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
   const songRef = useRef<ThemeSong | null>(null)
   const [syncError, setSyncError] = useState<Error | null>(null)
   const countdown = useCountdown(data.settings.date)
@@ -159,7 +162,7 @@ export default function App() {
   const toggleSong = () => {
     songRef.current ??= new ThemeSong()
     if (playing) { songRef.current.stop(); setPlaying(false) }
-    else { songRef.current.start(); setPlaying(true) }
+    else { songRef.current.start(s.themeSongUrl); setPlaying(true) }
   }
 
   const go = (v: View) => {
@@ -192,6 +195,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#fdf6e3]">
+      {showIntro && <LogoZoomIntro onComplete={() => setShowIntro(false)} />}
+
       {/* round Menu button */}
       <button
         onClick={() => setMenuOpen(true)}
@@ -378,6 +383,9 @@ export default function App() {
           </section>
 
           <footer className="bg-[#0f2a6b] px-4 py-8 text-center text-white">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 p-1.5 shadow-md">
+              <FestLogo className="h-full w-full" />
+            </div>
             <p className="font-hand text-3xl">MAKE YOUR MAGIC</p>
             {s.institutionName && <p className="mt-1">{s.institutionName}</p>}
             {s.venue && <p className="text-white/70">{s.venue}</p>}

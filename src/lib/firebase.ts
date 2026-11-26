@@ -216,6 +216,7 @@ export function subscribeFestData(
             showCountdown: Boolean(d.showCountdown ?? true),
             gameEnabled: Boolean(d.gameEnabled ?? true),
             launchEnabled: Boolean(d.launchEnabled ?? false),
+            themeSongUrl: String(d.themeSongUrl ?? ''),
           },
         }))
       },
@@ -314,6 +315,7 @@ export async function saveSettingsToFirestore(s: Settings): Promise<void> {
       showCountdown: Boolean(s.showCountdown),
       gameEnabled: Boolean(s.gameEnabled),
       launchEnabled: Boolean(s.launchEnabled),
+      themeSongUrl: clamp(s.themeSongUrl, 1000000),
       updatedAt: serverTimestamp(),
     })
   } catch (error) {

@@ -1,7 +1,5 @@
-// Simple original WebAudio tune — no copyrighted song, no audio file.
-// A cheerful looping melody generated with oscillators.
+// WebAudio synth melody + custom MP3 audio support.
 const NOTES: [number, number][] = [
-  // [frequency Hz, beats]
   [523.25, 1], [659.25, 1], [783.99, 1], [659.25, 1],
   [587.33, 1], [698.46, 1], [880.0, 2],
   [783.99, 1], [698.46, 1], [659.25, 1], [587.33, 1], [523.25, 2],
@@ -12,11 +10,29 @@ export class ThemeSong {
   private timer: number | null = null
   private step = 0
   private gain: GainNode | null = null
+  private audioElement: HTMLAudioElement | null = null
 
-  playing(): boolean { return this.timer !== null }
+  playing(): boolean {
+    return this.timer !== null || (this.audioElement !== null && !this.audioElement.paused)
+  }
 
-  start() {
-    if (this.timer !== null) return
+  start(audioUrl?: string) {
+    if (this.playing()) return
+
+    if (audioUrl && audioUrl.trim()) {
+      this.audioElement = new Audio(audioUrl.trim())
+      this.audioElement.loop = true
+      this.audioElement.play().catch(() => {
+        // Fallback to synth melody if custom audio playback fails
+        this.startSynth()
+      })
+      return
+    }
+
+    this.startSynth()
+  }
+
+  private startSynth() {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     if (!AC) return
     this.ctx = this.ctx ?? new AC()
@@ -48,6 +64,14 @@ export class ThemeSong {
   }
 
   stop() {
-    if (this.timer !== null) { window.clearInterval(this.timer); this.timer = null }
+    if (this.audioElement) {
+      this.audioElement.pause()
+      this.audioElement.currentTime = 0
+      this.audioElement = null
+    }
+    if (this.timer !== null) {
+      window.clearInterval(this.timer)
+      this.timer = null
+    }
   }
 }

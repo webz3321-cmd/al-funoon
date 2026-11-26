@@ -960,6 +960,49 @@ function SettingsForm({ data, runAction, busy }: { data: SiteData; runAction: Ru
           </Field>
         </div>
 
+        <div className="md:col-span-2">
+          <Field label="Theme Song (MP3 Audio Upload or URL)">
+            <div className="space-y-2">
+              <input
+                type="text"
+                className={inputCls}
+                value={draft.themeSongUrl}
+                onChange={(e) => patch({ themeSongUrl: e.target.value })}
+                placeholder="Paste MP3 audio URL or upload file below..."
+              />
+              <div className="flex items-center gap-3">
+                <input
+                  type="file"
+                  accept="audio/mp3,audio/mpeg,audio/*"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0]
+                    if (!f) return
+                    if (f.size > 8000000) {
+                      alert('Audio file size should be under 8MB.')
+                      return
+                    }
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                      patch({ themeSongUrl: String(reader.result || '') })
+                    }
+                    reader.readAsDataURL(f)
+                  }}
+                  className="text-xs text-slate-500 file:mr-4 file:rounded-md file:border-0 file:bg-[#e64e24]/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#e64e24] hover:file:bg-[#e64e24]/20"
+                />
+                {draft.themeSongUrl && (
+                  <button
+                    type="button"
+                    onClick={() => patch({ themeSongUrl: '' })}
+                    className="text-xs font-semibold text-red-600 hover:underline"
+                  >
+                    Remove audio
+                  </button>
+                )}
+              </div>
+            </div>
+          </Field>
+        </div>
+
         <div className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-3 md:col-span-2">
           <label className="flex items-center gap-2.5 rounded-lg border border-slate-200 p-3 text-sm">
             <input type="checkbox" checked={draft.showCountdown} onChange={(e) => patch({ showCountdown: e.target.checked })} />
